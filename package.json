@@ -4,6 +4,7 @@
   "private": true,
   "author": "Adam Shai <adam.shai@mail.huji.ac.il>",
   "license": "MIT",
+  "main": "/dist/index.js",
   "scripts": {
     "dev": "concurrently 'tsc -w' 'nodemon dist/index.js'",
     "build": "tsc",

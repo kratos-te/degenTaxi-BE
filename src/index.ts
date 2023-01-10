@@ -13,18 +13,18 @@ import {
 } from "./utils/Socketio";
 // import { Game } from './types/Game'
 //@ts-ignore-next-line
-import { Hand } from "pokersolver";
+// import { Hand } from "pokersolver";
 // import { sleep } from './utils/util'
-import { web3 } from "@project-serum/anchor";
-import * as anchor from "@project-serum/anchor";
+// import { web3 } from "@project-serum/anchor";
+// import * as anchor from "@project-serum/anchor";
 
-import fs from "fs";
-import path from "path";
-import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
+// import fs from "fs";
+// import path from "path";
+// import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 // import { IDL as BonesPokerIDL } from "./context/bones_poker_contract";
-import { Keypair } from "@solana/web3.js";
+// import { Keypair } from "@solana/web3.js";
 
-import { getCurrentGameStatus, startGame, withdrawInGame } from "./mng/games";
+// import { getCurrentGameStatus, startGame, withdrawInGame } from "./mng/games";
 // import { endGame } from './mng/games'
 // import { callbackify } from 'util'
 import { joinPlayer, notifyJoinedPlayers } from "./mng/player";
@@ -35,25 +35,25 @@ import {
   getUserInfo,
 } from "./mng/user";
 
-const cluster = (process.env.SOLANA_NETWORK as web3.Cluster) || "devnet";
-let solConnection = new web3.Connection(web3.clusterApiUrl(cluster));
-const BE_WALLET_ADDRESS =
-  process.env.BE_WALLET || "./src/context/BP-BE-devnet.json";
-const walletKeypair = Keypair.fromSecretKey(
-  Uint8Array.from(
-    JSON.parse(fs.readFileSync(path.resolve(BE_WALLET_ADDRESS), "utf-8"))
-  ),
-  { skipValidation: true }
-);
-const wallet = new NodeWallet(walletKeypair);
+// const cluster = (process.env.SOLANA_NETWORK as web3.Cluster) || "devnet";
+// let solConnection = new web3.Connection(web3.clusterApiUrl(cluster));
+// const BE_WALLET_ADDRESS =
+//   process.env.BE_WALLET || "./src/context/BP-BE-devnet.json";
+// const walletKeypair = Keypair.fromSecretKey(
+//   Uint8Array.from(
+//     JSON.parse(fs.readFileSync(path.resolve(BE_WALLET_ADDRESS), "utf-8"))
+//   ),
+//   { skipValidation: true }
+// );
+// const wallet = new NodeWallet(walletKeypair);
 // anchor.setProvider(anchor.AnchorProvider.local(web3.clusterApiUrl(cluster)));
 // Configure the client to use the local cluster.
-anchor.setProvider(
-  new anchor.AnchorProvider(solConnection, wallet, {
-    skipPreflight: true,
-    commitment: "confirmed",
-  })
-);
+// anchor.setProvider(
+//   new anchor.AnchorProvider(solConnection, wallet, {
+//     skipPreflight: true,
+//     commitment: "confirmed",
+//   })
+// );
 
 // const knex = getKnex()
 

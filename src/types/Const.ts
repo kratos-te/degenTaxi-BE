@@ -1,1 +1,1 @@
-export const GAME_COUNT_DOWN = 6000;
+export const GAME_COUNT_DOWN = 6500;

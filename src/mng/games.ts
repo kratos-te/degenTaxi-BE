@@ -17,9 +17,9 @@ import { depositFromWallet } from "./user";
 // const TIME_TO_START_NEW_HAND = 10_000
 const knex = getKnex();
 
-const BANG_MAX_LIMIT = 10000;
+const BANG_MAX_LIMIT = 300;
 const BANG_DECIMAL = 100;
-const SPEED = 5;
+// const SPEED = 5;
 
 export const startGame = async (
   io: Server<
@@ -30,8 +30,10 @@ export const startGame = async (
   >
 ) => {
   let random = Math.floor(Math.random() * BANG_MAX_LIMIT) / BANG_DECIMAL;
-  let gameDuration = (random / SPEED) * 1000 + GAME_COUNT_DOWN;
+  let gameDuration = random * 1000 + GAME_COUNT_DOWN;
   console.log("random ", random);
+  let gameStartAt = new Date().getTime();
+
   let game = await insertGame({
     random: random,
     end_at: new Date(new Date().getTime() + gameDuration),
@@ -46,13 +48,32 @@ export const startGame = async (
   let players = await getPlayersByGameId(game.id);
 
   io.emit("startGame", players);
+  let interval: NodeJS.Timer;
+  setTimeout(() => {
+    interval = setInterval(() => {
+      let currentPosition =
+        (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 3000 + 1;
+      io.emit("currentPositionUpdated", currentPosition);
+    }, 33.3);
+  }, GAME_COUNT_DOWN);
+
   setTimeout(() => {
     if (!game) {
       return;
     }
-    endGame(io);
+    clearInterval(interval);
+    endGame(io, random);
     startGame(io);
   }, gameDuration);
+
+  // io.emit("startGame", players);
+  // setTimeout(() => {
+  //   if (!game) {
+  //     return;
+  //   }
+  //   endGame(io, random);
+  //   startGame(io);
+  // }, gameDuration);
 };
 
 export const insertGame = async (args: Partial<Game>): Promise<Game | null> => {
@@ -71,10 +92,11 @@ export const endGame = async (
     ServerToClientEvents,
     InterServerEvents,
     SocketData
-  >
+  >,
+  random: number
 ) => {
   // let endTime = game.end_at
-  io.emit("endGame");
+  io.emit("endGame", random);
 };
 
 export const getGameById = async (gameId: number): Promise<Game | null> => {
@@ -130,14 +152,17 @@ export const withdrawInGame = async (
         new Date(lastGame.end_at).getTime() -
         new Date(lastGame.start_at).getTime() -
         GAME_COUNT_DOWN;
-      let withdrawTime =
-        new Date().getTime() -
-        new Date(lastGame.start_at).getTime() -
-        GAME_COUNT_DOWN;
+      let withdrawTime = new Date().getTime();
+
       let player = await getPlayer(lastGame.id, wallet);
       if (!player || !player.bet_amount) return 0;
       let withdrawAmount =
-        player.bet_amount * (withdrawTime / (gameDuration - 1) + 1);
+        player.bet_amount *
+        ((withdrawTime -
+          new Date(lastGame.start_at).getTime() -
+          GAME_COUNT_DOWN) /
+          3000 +
+          1);
       await depositFromWallet(wallet, withdrawAmount);
 
       console.log("random ", lastGame.random);
@@ -156,7 +181,7 @@ export const withdrawInGame = async (
 
       io.emit("notifyPlayerWithdrawn", players);
 
-      return withdrawAmount;
+      return withdrawAmount / player.bet_amount;
     } else return 0;
   } catch (e) {
     console.log("err on withdrawInGame >> ", e);

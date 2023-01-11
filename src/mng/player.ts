@@ -11,20 +11,21 @@ import {
   SocketData,
 } from "../utils/Socketio";
 import { getUserByWallet, updateUser } from "./user";
+import { User } from "../types/User";
 
 const knex = getKnex();
 
 export const joinPlayer = async (
   wallet: string,
   betAmount: number
-): Promise<boolean> => {
+): Promise<User | null> => {
   try {
     let user = await getUserByWallet(wallet);
-    if (!user) return false;
+    if (!user) return null;
 
     let lastGame = await getLastGame();
-    if (!lastGame) return false;
-    let result;
+    if (!lastGame) return null;
+    let result: Player | null;
     if (
       new Date(lastGame.start_at).getTime() + GAME_COUNT_DOWN >
         new Date().getTime() &&
@@ -50,11 +51,12 @@ export const joinPlayer = async (
     }
     if (result) {
       await updateUser(wallet, { balance: user.balance - betAmount });
-      return true;
-    } else return false;
+      user.balance -= betAmount;
+      return user;
+    } else return null;
   } catch (e) {
     console.log("err on joinPlayer >> ", e);
-    return false;
+    return null;
   }
 };
 

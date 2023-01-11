@@ -4,7 +4,7 @@ import { User } from "src/types/User";
 
 export interface ServerToClientEvents {
   startGame: (players: Player[]) => void;
-  endGame: () => void;
+  endGame: (random: number) => void;
   notifyJoinedPlayers: (players: Player[]) => void;
   // checkAccount: (user: User) => void
 
@@ -14,6 +14,7 @@ export interface ServerToClientEvents {
     currentTaxiPosition: number,
     gameStarted: boolean
   ) => void;
+  currentPositionUpdated: (currentPosition: number) => void;
 }
 
 export interface ClientToServerEvents {
@@ -24,7 +25,11 @@ export interface ClientToServerEvents {
       gameStarted: boolean
     ) => void
   ) => Promise<void>;
-  joinGame: (wallet: string, betAmount: number) => Promise<void>;
+  joinGame: (
+    wallet: string,
+    betAmount: number,
+    callback: (result: User | null) => void
+  ) => Promise<void>;
   withdrawAmount: (
     wallet: string,
     withdrawAmount: number,

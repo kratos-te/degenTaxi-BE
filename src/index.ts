@@ -1,157 +1,157 @@
-import express from "express";
-import dotenv from "dotenv";
+import express from 'express'
+import dotenv from 'dotenv'
 // import { getKnex } from './knex'
 // import { logError } from './utils/Error'
-import bp from "body-parser";
-import { Server } from "socket.io";
-import { createServer } from "http";
+import bp from 'body-parser'
+import { Server } from 'socket.io'
+import { createServer } from 'http'
 import {
   ClientToServerEvents,
   InterServerEvents,
   ServerToClientEvents,
   SocketData,
-} from "./utils/Socketio";
+} from './utils/Socketio'
 // import { Game } from './types/Game'
 //@ts-ignore-next-line
-import { Hand } from "pokersolver";
+import { Hand } from 'pokersolver'
 // import { sleep } from './utils/util'
-import { getCurrentGameStatus, startGame, withdrawInGame } from "./mng/games";
+import { getCurrentGameStatus, startGame, withdrawInGame } from './mng/games'
 // import { endGame } from './mng/games'
 // import { callbackify } from 'util'
-import { joinPlayer, notifyJoinedPlayers } from "./mng/player";
+import { joinPlayer, notifyJoinedPlayers } from './mng/player'
 import {
   withdrawFromAccount,
   depositFromWallet,
   insertUser,
   getUserInfo,
-} from "./mng/user";
+} from './mng/user'
 
 // const knex = getKnex()
 
-const app = express();
-app.use(bp.json());
-dotenv.config();
+const app = express()
+app.use(bp.json())
+dotenv.config()
 
-app.get("/", async (req, res) => {
-  console.log(req.body);
-  res.send("server is running...");
-});
+app.get('/', async (req, res) => {
+  console.log(req.body)
+  res.send('server is running...')
+})
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8080
 const httpServer = createServer(app).listen(port, async () => {
-  console.log(`Listening on port ${port}`);
-  await startGame(io);
-});
+  console.log(`Listening on port ${port}`)
+  await startGame(io)
+})
 
 const io = new Server<
   ClientToServerEvents,
   ServerToClientEvents,
   InterServerEvents,
   SocketData
->(httpServer);
+>(httpServer)
 
-io.on("connection", async (socket) => {
-  console.log("connected socket " + socket.id);
+io.on('connection', async (socket) => {
+  console.log('connected socket ' + socket.id)
 
-  let data = await getCurrentGameStatus();
+  let data = await getCurrentGameStatus()
 
-  socket.on("getCurrentGameStatus", async (callback) => {
+  socket.on('getCurrentGameStatus', async (callback) => {
     try {
-      callback(data.players, data.currentTaxiPosition, data.gameStarted);
+      callback(data.players, data.currentTaxiPosition, data.gameStarted)
     } catch (e) {
-      console.log("err on getCurrentGameStatus >> ", e);
-      callback([], 0, false);
+      console.log('err on getCurrentGameStatus >> ', e)
+      callback([], 0, false)
     }
-  });
-  socket.on("joinGame", async (wallet, betAmount, callback) => {
+  })
+  socket.on('joinGame', async (wallet, betAmount, callback) => {
     try {
       if (!wallet || !betAmount) {
-        return;
+        return
       }
-      let result = await joinPlayer(wallet, betAmount);
+      let result = await joinPlayer(wallet, betAmount)
       if (result) {
-        await notifyJoinedPlayers(io);
-        callback(result);
+        await notifyJoinedPlayers(io)
+        callback(result)
       } else {
-        callback(null);
+        callback(null)
       }
     } catch (e) {
-      console.log("err on joinGame >> ", e);
-      callback(null);
+      console.log('err on joinGame >> ', e)
+      callback(null)
     }
-  });
+  })
 
-  socket.on("withdrawAmount", async (wallet, withdrawAmount, callback) => {
+  socket.on('withdrawAmount', async (wallet, withdrawAmount, callback) => {
     try {
       if (!wallet || !withdrawAmount) {
-        return;
+        return
       }
-      let newBalance = await withdrawFromAccount(wallet, withdrawAmount);
-      callback(newBalance);
+      let newBalance = await withdrawFromAccount(wallet, withdrawAmount)
+      callback(newBalance)
       // if (withdrawResult) {
       //   await checkAccount(io)
       // }
     } catch (e) {
-      console.log("err on getWithdraw >>", e);
-      callback(null);
+      console.log('err on getWithdraw >>', e)
+      callback(null)
     }
-  });
+  })
 
-  socket.on("depositAmount", async (wallet, depositAmount, callback) => {
+  socket.on('depositAmount', async (wallet, depositAmount, callback) => {
     try {
       if (!wallet || !depositAmount) {
-        return;
+        return
       }
-      let newBalance = await depositFromWallet(wallet, depositAmount);
+      let newBalance = await depositFromWallet(wallet, depositAmount)
 
-      callback(newBalance);
+      callback(newBalance)
     } catch (e) {
-      console.log("err on getDeposit >>", e);
-      callback(null);
+      console.log('err on getDeposit >>', e)
+      callback(null)
     }
-  });
+  })
 
-  socket.on("connectWallet", async (wallet, callback) => {
+  socket.on('connectWallet', async (wallet, callback) => {
     try {
       if (!wallet) {
-        return;
+        return
       }
-      await insertUser({ address: wallet });
-      let user = await getUserInfo(wallet);
-      callback(user);
+      await insertUser({ address: wallet })
+      let user = await getUserInfo(wallet)
+      callback(user)
     } catch (e) {
-      console.log("err on connectWallet >>", e);
+      console.log('err on connectWallet >>', e)
     }
-  });
+  })
 
-  socket.on("getUserByWallet", async (wallet, callback) => {
+  socket.on('getUserByWallet', async (wallet, callback) => {
     try {
       if (!wallet) {
-        return;
+        return
       }
-      let user = await getUserInfo(wallet);
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>getUserByWallet >> ", user);
+      let user = await getUserInfo(wallet)
+      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>getUserByWallet >> ', user)
 
-      callback(user);
+      callback(user)
     } catch (e) {
-      console.log("err on connectWallet >>", e);
-      callback(null);
+      console.log('err on connectWallet >>', e)
+      callback(null)
     }
-  });
+  })
 
-  socket.on("withdrawInGame", async (wallet, callback) => {
+  socket.on('withdrawInGame', async (wallet, callback) => {
     try {
       if (!wallet) {
-        callback(0);
-        return;
+        callback(0)
+        return
       }
-      let amount = await withdrawInGame(wallet, io);
-      callback(amount);
+      let amount = await withdrawInGame(wallet, io)
+      callback(amount)
     } catch (e) {
-      console.log(e);
-      callback(0);
+      console.log(e)
+      callback(0)
     }
-  });
+  })
 
   // socket.on("startGame", async (gameId) => {
   //   try {
@@ -173,4 +173,4 @@ io.on("connection", async (socket) => {
   //     logError("startGame", e);
   //   }
   // });
-});
+})

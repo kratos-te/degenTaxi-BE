@@ -1,5 +1,5 @@
-import { User } from "src/types/User";
-import { getKnex } from "../knex";
+import { User } from 'src/types/User'
+import { getKnex } from '../knex'
 // import { Server } from 'socket.io'
 // import {
 //   ClientToServerEvents,
@@ -7,63 +7,78 @@ import { getKnex } from "../knex";
 //   ServerToClientEvents,
 //   SocketData,
 // } from '../utils/Socketio'
-const knex = getKnex();
+const knex = getKnex()
 
 export const insertUser = async (args: Partial<User>): Promise<User | null> => {
   try {
-    let users = await knex<User>("users").select().where(args);
+    let users = await knex<User>('users').select().where(args)
     if (users && users.length > 0) {
-      return null;
+      return null
     }
-    const [user] = await knex<User>("users").insert(
+    const [user] = await knex<User>('users').insert(
       {
         ...args,
       },
-      "*"
-    );
-    return user;
+      '*',
+    )
+    return user
   } catch (e) {
-    console.log("err on insertUser >> ", e);
-    return null;
+    console.log('err on insertUser >> ', e)
+    return null
   }
-};
+}
 
 export const getUserByWallet = async (wallet: string): Promise<User | null> => {
   try {
-    let [user] = await knex<User>("users").select().where({ address: wallet });
-    return user;
+    let [user] = await knex<User>('users').select().where({ address: wallet })
+    return user
   } catch (e) {
-    console.log("err on getUserByWallet >> ", e);
-    return null;
+    console.log('err on getUserByWallet >> ', e)
+    return null
   }
-};
+}
+
+// export const validationWithdrawFromAccount = async (
+//   wallet: string,
+//   withdrawAmount: number,
+// ): Promise<string | null> => {
+//   try {
+//     let user = await getUserByWallet(wallet)
+//     if (!user) return null
+//     if (withdrawAmount > user.balance) {
+//       return 'Invalid withdraw amount '
+//     }
+//   } catch (e) {
+//     console.log('Invalid withdraw amount>> ', e)
+//   }
+// }
 
 export const updateUser = async (
   wallet: string,
-  args: Partial<User>
+  args: Partial<User>,
 ): Promise<void> => {
   try {
-    await knex<User>("users").update(args).where({ address: wallet });
+    await knex<User>('users').update(args).where({ address: wallet })
   } catch (e) {
-    console.log("err on updateUser >> ", e);
+    console.log('err on updateUser >> ', e)
   }
-};
+}
 
 export const withdrawFromAccount = async (
   wallet: string,
-  withdrawAmount: number
+  withdrawAmount: number,
 ): Promise<number | null> => {
   try {
-    let user = await getUserByWallet(wallet);
-    if (!user) return null;
+    let user = await getUserByWallet(wallet)
+    if (!user) return null
 
-    await updateUser(wallet, { balance: user.balance - withdrawAmount });
-    return user.balance - withdrawAmount;
+    await updateUser(wallet, { balance: user.balance - withdrawAmount })
+    return user.balance - withdrawAmount
   } catch (e) {
-    console.log("err on withdraw from Account >> ", e);
-    return null;
+    console.log('err on withdraw from Account >> ', e)
+    return null
   }
-};
+}
 
 // export const checkAccount = async (io: Server<
 //     ClientToServerEvents,
@@ -82,26 +97,26 @@ export const withdrawFromAccount = async (
 
 export const depositFromWallet = async (
   wallet: string,
-  depositAmount: number
+  depositAmount: number,
 ): Promise<number | null> => {
   try {
-    let user = await getUserByWallet(wallet);
-    if (!user) return null;
+    let user = await getUserByWallet(wallet)
+    if (!user) return null
 
-    await updateUser(wallet, { balance: user.balance + depositAmount });
-    return user.balance + depositAmount;
+    await updateUser(wallet, { balance: user.balance + depositAmount })
+    return user.balance + depositAmount
   } catch (e) {
-    console.log("err on withdraw from Account >> ", e);
-    return null;
+    console.log('err on withdraw from Account >> ', e)
+    return null
   }
-};
+}
 
 export const getUserInfo = async (wallet: string) => {
   try {
-    let newUser = getUserByWallet(wallet);
-    return newUser;
+    let newUser = getUserByWallet(wallet)
+    return newUser
   } catch (e) {
-    console.log("err on sendUserInfo >>", e);
-    return null;
+    console.log('err on sendUserInfo >>', e)
+    return null
   }
-};
+}

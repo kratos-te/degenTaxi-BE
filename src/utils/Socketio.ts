@@ -15,6 +15,7 @@ export interface ServerToClientEvents {
     gameStarted: boolean,
   ) => void
   currentPositionUpdated: (currentPosition: number) => void
+  // sendBangHistory: (bangHistory: BangHistory[]) => void
 }
 
 export interface ClientToServerEvents {

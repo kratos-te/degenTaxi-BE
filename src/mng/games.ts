@@ -14,6 +14,7 @@ import { Game } from '../types/Game'
 import { getPlayer, getPlayersByGameId, updatePlayer } from './player'
 import { GAME_COUNT_DOWN } from '../types/Const'
 import { depositFromWallet } from './user'
+import { BangHistory } from 'src/types/BangHistory'
 // const TIME_TO_START_NEW_HAND = 10_000
 const knex = getKnex()
 
@@ -22,8 +23,11 @@ const knex = getKnex()
 
 const BASIC_PERCENTAGE = 0.05
 const MAIN_PERCENTAGE = 0.85
+
 // const ELSE_PERCENTAGE = 0.1
 // const SPEED = 5;
+
+// const SPEED_INDEX=10000
 
 export const startGame = async (
   io: Server<
@@ -162,7 +166,7 @@ export const startGame = async (
   // }, gameDuration);
 
   const controlGame = async (random: number) => {
-    let gameDuration = Math.sqrt(random) * 4000 + GAME_COUNT_DOWN
+    let gameDuration = Math.sqrt(random) * 12400 + GAME_COUNT_DOWN
     let gameStartAt = new Date().getTime()
     let game = await insertGame({
       random: random,
@@ -182,15 +186,30 @@ export const startGame = async (
       interval = setInterval(() => {
         // let currentPosition =
         //   (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 12000 + 1
+        let powIndex = Math.pow(
+          (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 70000,
+          2,
+        )
+        let speedIndex =
+          9000 +
+          ((new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 1000) * 150
+
         let currentPosition =
           Math.pow(
-            (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 4000,
-            2,
+            (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / speedIndex,
+            2 + powIndex,
           ) + 1
+        // console.log('powIndex>>', powIndex)
+
+        // console.log(
+        //   'position>>',
+        //   currentPosition,
+        //   'time',
+        //   (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 1000,
+        // )
         io.emit('currentPositionUpdated', currentPosition)
       }, 33.3)
     }, GAME_COUNT_DOWN)
-
     setTimeout(() => {
       if (!game) {
         return
@@ -233,6 +252,39 @@ export const startGame = async (
       console.log('random >>>', random)
       controlGame(random)
     }
+  }
+
+  let gameHistory = await getGameHistory()
+
+  console.log('gameHistory >>>', gameHistory?.map)
+
+  // let bangHistory = await getBangHistory()
+  // console.log('bangHistory >>>', bangHistory)
+
+  // io.emit('sendBangHistory', bangHistory)
+}
+
+export const getGameHistory = async (): Promise<Game[] | null> => {
+  try {
+    let game = await knex<Game>('games').select().orderBy('id')
+    return game
+  } catch (e) {
+    console.log('err on getGameHistory >>>', e)
+    return null
+  }
+}
+
+export const getBangHistory = async (
+  gameId: number,
+): Promise<BangHistory[] | null> => {
+  try {
+    let players = await knex<BangHistory>('play')
+      .select()
+      .where({ game_id: gameId })
+    return players
+  } catch (e) {
+    console.log('err on getBangHistory>>>', e)
+    return null
   }
 }
 
@@ -313,12 +365,31 @@ export const withdrawInGame = async (
 
       let player = await getPlayer(lastGame.id, wallet)
       if (!player || !player.bet_amount) return 0
-      let withdrawAmount =
-        player.bet_amount *
+      let speedIndex =
+        9000 +
         ((withdrawTime -
           new Date(lastGame.start_at).getTime() -
           GAME_COUNT_DOWN) /
-          3000 +
+          1000) *
+          150
+
+      let powIndex = Math.pow(
+        (withdrawTime -
+          new Date(lastGame.start_at).getTime() -
+          GAME_COUNT_DOWN) /
+          70000,
+        2,
+      )
+
+      let withdrawAmount =
+        player.bet_amount *
+        (Math.pow(
+          (withdrawTime -
+            new Date(lastGame.start_at).getTime() -
+            GAME_COUNT_DOWN) /
+            speedIndex,
+          2 + powIndex,
+        ) +
           1)
       await depositFromWallet(wallet, withdrawAmount)
 
@@ -331,6 +402,7 @@ export const withdrawInGame = async (
         withdraw_amount: withdrawAmount,
         balance_change: withdrawAmount,
       })
+
       player.balance_change = withdrawAmount - player.bet_amount
       player.withdraw_amount = withdrawAmount
 

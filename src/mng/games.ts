@@ -14,7 +14,7 @@ import { Game } from '../types/Game'
 import { getPlayer, getPlayersByGameId, updatePlayer } from './player'
 import { GAME_COUNT_DOWN } from '../types/Const'
 import { depositFromWallet } from './user'
-import { BangHistory } from 'src/types/BangHistory'
+
 // const TIME_TO_START_NEW_HAND = 10_000
 const knex = getKnex()
 
@@ -256,35 +256,41 @@ export const startGame = async (
 
   let gameHistory = await getGameHistory()
 
-  console.log('gameHistory >>>', gameHistory?.map)
+  console.log('gameHistory >>>', gameHistory[0].id)
+  for (var i = 0; i < gameHistory.length; i++) {
+    let playerHistory = await getBangHistory(gameHistory[i].id)
+
+    console.log(
+      'gameHistory>>>',
+      gameHistory[i],
+      'bangHistory >>>',
+      playerHistory,
+    )
+    io.emit('sendBangHistory', playerHistory, gameHistory)
+  }
 
   // let bangHistory = await getBangHistory()
-  // console.log('bangHistory >>>', bangHistory)
 
   // io.emit('sendBangHistory', bangHistory)
 }
 
-export const getGameHistory = async (): Promise<Game[] | null> => {
+export const getGameHistory = async (): Promise<Game[]> => {
   try {
-    let game = await knex<Game>('games').select().orderBy('id')
+    let game = await knex<Game>('games').select().orderBy('id', 'desc')
     return game
   } catch (e) {
     console.log('err on getGameHistory >>>', e)
-    return null
+    return []
   }
 }
 
-export const getBangHistory = async (
-  gameId: number,
-): Promise<BangHistory[] | null> => {
+export const getBangHistory = async (gameId: number): Promise<Player[]> => {
   try {
-    let players = await knex<BangHistory>('play')
-      .select()
-      .where({ game_id: gameId })
+    let players = await knex<Player>('play').select().where({ game_id: gameId })
     return players
   } catch (e) {
     console.log('err on getBangHistory>>>', e)
-    return null
+    return []
   }
 }
 

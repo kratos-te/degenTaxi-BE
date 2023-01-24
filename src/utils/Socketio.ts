@@ -1,6 +1,7 @@
 import { Player } from 'src/types/Player'
 // import { checkAccount } from '../mng/user'
 import { User } from 'src/types/User'
+import { Game } from 'src/types/Game'
 
 export interface ServerToClientEvents {
   startGame: (players: Player[]) => void
@@ -15,7 +16,7 @@ export interface ServerToClientEvents {
     gameStarted: boolean,
   ) => void
   currentPositionUpdated: (currentPosition: number) => void
-  // sendBangHistory: (bangHistory: BangHistory[]) => void
+  sendBangHistory: (playerHistory: Player[], gameHistory: Game[]) => void
 }
 
 export interface ClientToServerEvents {

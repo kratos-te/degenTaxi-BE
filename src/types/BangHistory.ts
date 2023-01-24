@@ -4,7 +4,7 @@ export interface BangHistory {
   random: number
   start_at: Date
   end_at: Date
-  player: {
+  players: {
     wallet: string
     bet_amount: number
     withdraw_amount: number

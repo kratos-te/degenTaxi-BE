@@ -109,7 +109,7 @@ export const notifyJoinedPlayers = async (
 export const getPlayersByGameId = async (gameId: number): Promise<Player[]> => {
   try {
     let players = await knex<Player>('play').select().where({ game_id: gameId })
-    console.log(players, 'play')
+
     return players
   } catch (e) {
     console.log('err on getPlayersByGameId >> ', e)

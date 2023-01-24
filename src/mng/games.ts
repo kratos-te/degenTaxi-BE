@@ -168,6 +168,7 @@ export const startGame = async (
   const controlGame = async (random: number) => {
     let gameDuration = Math.sqrt(random) * 12400 + GAME_COUNT_DOWN
     let gameStartAt = new Date().getTime()
+
     let game = await insertGame({
       random: random,
       end_at: new Date(new Date().getTime() + gameDuration),
@@ -178,8 +179,8 @@ export const startGame = async (
       }, gameDuration)
       return
     }
-    let players = await getPlayersByGameId(game.id)
-
+    let players = await getPlayersByGameId(game)
+    let bangAt = 0
     io.emit('startGame', players)
     let interval: NodeJS.Timer
     setTimeout(() => {
@@ -190,6 +191,7 @@ export const startGame = async (
           (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 70000,
           2,
         )
+
         let speedIndex =
           9000 +
           ((new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 1000) * 150
@@ -205,16 +207,26 @@ export const startGame = async (
         //   'position>>',
         //   currentPosition,
         //   'time',
-        //   (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN) / 1000,
+        //   (new Date().getTime() - gameStartAt - GAME_COUNT_DOWN ) / 1000,
         // )
+
         io.emit('currentPositionUpdated', currentPosition)
+        bangAt = currentPosition
       }, 33.3)
     }, GAME_COUNT_DOWN)
+
+    // await updateGame(game, {
+    //   bang_at: bangAt,
+    // })
     setTimeout(() => {
       if (!game) {
         return
       }
+
       clearInterval(interval)
+      updateGame(game, {
+        bang_at: bangAt,
+      })
       endGame(io, random)
       startGame(io)
     }, gameDuration)
@@ -256,16 +268,15 @@ export const startGame = async (
 
   let gameHistory = await getGameHistory()
 
-  console.log('gameHistory >>>', gameHistory[0].id)
   for (var i = 0; i < gameHistory.length; i++) {
-    let playerHistory = await getBangHistory(gameHistory[i].id)
+    let playerHistory = await getPlayersByGameId(gameHistory[i].id)
 
-    console.log(
-      'gameHistory>>>',
-      gameHistory[i],
-      'bangHistory >>>',
-      playerHistory,
-    )
+    // console.log(
+    //   'gameHistory>>>',
+    //   gameHistory[i],
+    //   'bangHistory >>>',
+    //   playerHistory,
+    // )
     io.emit('sendBangHistory', playerHistory, gameHistory)
   }
 
@@ -284,24 +295,47 @@ export const getGameHistory = async (): Promise<Game[]> => {
   }
 }
 
-export const getBangHistory = async (gameId: number): Promise<Player[]> => {
+export const updateGame = async (
+  id: number,
+  args: Partial<Game>,
+): Promise<void> => {
   try {
-    let players = await knex<Player>('play').select().where({ game_id: gameId })
-    return players
+    await knex<Game>('games').update(args).where({ id: id })
   } catch (e) {
-    console.log('err on getBangHistory>>>', e)
-    return []
+    console.log('err on updateGame >>', e)
   }
 }
 
-export const insertGame = async (args: Partial<Game>): Promise<Game | null> => {
+// export const getGameId = async (): Promise<number | null> => {
+//   try {
+//     let gameId = await knex<Game>('games')
+//       .select('id')
+//       .then((games) => {})
+//     return gameId
+//   } catch (e) {
+//     return null
+//   }
+// }
+// export const getBangHistory = async (gameId: number): Promise<Player[]> => {
+//   try {
+//     let players = await knex<Player>('play').select().where({ game_id: gameId })
+//     return players
+//   } catch (e) {
+//     console.log('err on getBangHistory>>>', e)
+//     return []
+//   }
+// }
+
+export const insertGame = async (
+  args: Partial<Game>,
+): Promise<number | null> => {
   const [game] = await knex<Game>('games').insert(
     {
       ...args,
     },
     '*',
   )
-  return game
+  return game.id
 }
 
 export const endGame = async (
